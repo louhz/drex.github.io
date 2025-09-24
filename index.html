@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+    content="D-REX: Differentiable Real-to-sim-to-real Engine for Learning Dexterous Grasping">
+  <meta name="keywords" content="Robotics, Quadruped, Whole-body Control, Whole-body Manipulation">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>
+    D-REX: Differentiable Real-to-sim-to-real Engine for Learning Dexterous Grasping
+  </title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QZ38WT2YPD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-QZ38WT2YPD');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://kit.fontawesome.com/19914a84eb.js" crossorigin="anonymous"></script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+      <style>
+      /* Sidebar Navigation Styles */
+      .section-nav {
+        position: fixed;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .section-nav .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: linear-gradient(90deg, rgba(255, 110, 196, 0.4), rgba(120, 115, 245, 0.4));
+        border: 2px solid rgba(255, 110, 196, 0.7);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .section-nav .dot:hover {
+        background: linear-gradient(90deg, rgba(255, 110, 196, 0.8), rgba(120, 115, 245, 0.8));
+        border-color: rgba(255, 110, 196, 1);
+        transform: scale(1.2);
+        box-shadow: 0 0 10px rgba(255, 110, 196, 0.5), 0 0 10px rgba(120, 115, 245, 0.5);
+      }
+
+      .section-nav .dot.active {
+        background: linear-gradient(90deg, #ff6ec4, #7873f5);
+        border-color: #ff6ec4;
+        transform: scale(1.3);
+        box-shadow: 0 0 15px rgba(255, 110, 196, 0.8), 0 0 15px rgba(120, 115, 245, 0.8);
+      }
+
+      .section-nav .dot::after {
+        content: attr(title);
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(90deg, rgba(255, 110, 196, 0.9), rgba(120, 115, 245, 0.9));
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        font-weight: bold;
+      }
+
+      .section-nav .dot:hover::after {
+        opacity: 1;
+      }
+
+      /* Hide sidebar on mobile */
+      @media (max-width: 768px) {
+        .section-nav {
+          display: none;
+        }
+      }
+    </style>
+</head>
+
+<body>
+  <!-- Sidebar Navigation -->
+  <div class="section-nav">
+    <a href="#cover" class="dot active" title="Cover"></a>
+    <a href="#umi" class="dot" title="Abstract"></a>
+    <a href="#overview" class="dot" title="Method Overview"></a>
+    <a href="#workspace-splats" class="dot" title="3D Visualization"></a>
+    <a href="#task-tracking" class="dot" title="Mass Identification"></a>
+    <a href="#wbc" class="dot" title="Force-Based Control"></a>
+    <a href="#dexterous-tasks" class="dot" title="Dexterous Tasks"></a>
+  </div>
+
+  <section class="hero is-link is-fullheight video" style="overflow: hidden; position:relative;" id="cover">
+    <div class="hero-video" style="height: 100%; width: 177.77777778vh; min-width: 100%;min-height: 56.25vw;">
+      <video playsinline autoplay muted loop>
+        <source src="./static/videos/dream_video.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="hero-video is-hidden-tablet is-inline-block-mobile"
+      style="height: 154.28571428vw; width: 100%; min-width:64.81481481vh;min-height:100%;">
+      <video playsinline autoplay muted loop>
+        <source src="./static/videos/dream_video.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="overlay"></div>
+    <!-- Hero head: will stick at the top -->
+    <div class="hero-head is-hidden-mobile">
+      <header class="navbar">
+        <div class="container is-size-5">
+          <div class="navbar-menu">
+            <div class="navbar-end">
+              <a class="navbar-item pl-4 pr-4" href="">
+                <span class="icon" style="margin-right:5px;">
+                  <img src="./static/images/pdf.svg" alt="PDF" />
+                </span>
+                <span>Paper</span>
+              </a>
+              <a class="navbar-item  pl-4 pr-4" href="">
+                <span class="icon" style="margin-right:5px;">
+                  <img src="./static/images/arxiv.svg" alt="ArXiv" />
+                </span>
+                <span>arXiv</span> </a>
+              <a href="" class="navbar-item  pl-4 pr-4">
+                <span class="icon" style="margin-right:5px;">
+                  <img src="./static/images/youtube.svg" alt="Youtube" />
+                </span>
+                <span>Video</span> </a>
+              <span class="navbar-item  pl-4 pr-4">
+                <a href="" class="button is-inverted is-large">
+                  <span class="icon">
+                    <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <!-- Hero content: will be in the middle -->
+    <div class="hero-body">
+      <div class="container has-text-centered">
+        <h1 class="title is-1 publication-title is-size-1-mobile" style="font-size: 12rem;">
+          D-REX
+        </h1>
+        <h1 class="subtitle is-1 publication-title is-size-4-mobile" style="font-size: 4rem;">
+          Differentiable <span style="
+            background: linear-gradient(90deg, #ff6ec4, #7873f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            padding-bottom: 0.1em;">Real-to-sim-to-real</span> Engine for Learning Dexterous Grasping
+        </h1>
+        <h1 class="is-2 is-italic is-size-4-mobile" style="font-size: 2rem; opacity: 80%;">
+          In Submission
+        </h1>
+        <div class="column has-text-centered is-hidden-tablet">
+          <div class="publication-links">
+            <!-- PDF Link. -->
+            <span class="link-block">
+              <a href="" class="external-link button is-normal is-rounded is-dark">
+                <span class="icon">
+                  <img src="./static/images/pdf.svg" alt="PDF" />
+                </span>
+                <span>Paper</span>
+              </a>
+            </span>
+            <span class="link-block">
+              <a href="" class="external-link button is-normal is-rounded is-dark">
+                <span class="icon">
+                  <img src="./static/images/arxiv.svg" alt="ArXiv" />
+                </span>
+                <span>arXiv</span>
+              </a>
+            </span>
+            <!-- Video Link. -->
+            <span class="link-block">
+              <a href="" class="external-link button is-normal is-rounded is-dark">
+                <span class="icon">
+                  <img src="./static/images/youtube.svg" alt="Youtube" />
+                </span>
+                <span>Video</span>
+              </a>
+            </span>
+            <!-- Code Link. -->
+            <span class="link-block">
+              <a href=""
+                class="external-link button is-normal is-rounded is-dark">
+                <span class="icon">
+                  <i class="fab fa-github"></i>
+                </span>
+                <span>Code</span>
+              </a>
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Hero footer: will stick at the bottom -->
+    <div class="hero-foot is-hidden-mobile">
+      <nav class="tabs is-boxed is-fullwidth is-size-5">
+        <ul>
+          <li><a href="#umi">Abstract</a></li>
+          <li><a href="#overview">Method Overview</a></li>
+          <li><a href="#workspace-splats">3D Visualization</a></li>
+          <li><a href="#task-tracking">Mass Identification</a></li>
+          <li><a href="#wbc">Force-Based Control</a></li>
+          <li><a href="#dexterous-tasks">Dexterous Tasks</a></li>
+        </ul>
+      </nav>
+    </div>
+  </section>
+
+
+
+
+
+  <section class="section is-small" id="umi">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+
+          <h2 class="title is-1 has-text-centered is-size-4-mobile">Abstract 📝</h2>
+          <div class="content">
+            <p>
+              Simulation provides a cost-effective and flexible platform for data generation and policy learning to develop robotic systems 🤖. However, bridging the gap between simulation and real-world dynamics remains a significant challenge, especially in physical parameter identification 🔍. In this work, we introduce a real-to-sim-to-real framework that leverages the Gaussian Splat representations to build a differentiable engine, enabling object mass identification from real-world visual observations and robot control signals, while enabling manipulation policy learning simultaneously ⚖️.
+            </p>
+          </div>
+
+          <div class="content">
+            <p>
+              Through optimizing the mass of the manipulated object, our method automatically builds high-fidelity and physically plausible digital twins 🌟. Additionally, we propose a novel approach to train the force-aware grasping policies from limited data by transferring feasible human demonstrations into simulated robot demonstrations 🎯. Through comprehensive experiments, we demonstrate that our proposed framework achieves accurate and robust performance on mass identification across various object geometries and mass values 📊. Those optimized mass values facilitate force-aware policy learning, achieving superior and high performance on object grasping, reducing the sim-to-real gap effectively ✨.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section is-medium" id="overview">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column is-four-fifths has-text-justified is-hidden-mobile">
+          <h2 class="subtitle ">
+            We present D-REX 🌟, a differentiable real-to-sim-to-real framework that enables 4D photorealistic rendering and physical simulation by identifying object mass from real-world visual observations and robot interaction data 🔍. D-REX reconstructs object geometry using Gaussian Splat representations and leverages a differentiable physics engine for end-to-end mass identification ⚖️. The identified mass is then used to enable force-aware policy learning from human demonstrations, supporting robust grasping and sim-to-real transfer in dexterous manipulation tasks ✨.
+          </h2>
+          <br>
+          <img src="./static/images/teaser.png" alt="Teaser Figure" style="width: 100%; height: auto;" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section is-large" id="overview">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-justified is-four-fifths  is-hidden-mobile">
+          <h2 class="title is-1 has-text-centered is-size-4-mobile">Method Overview 🚀</h2>
+          <div class="content">
+            <p>
+              <strong>Overview of our method 🚀</strong> Our approach consists of four components: (1) Real-to-Sim 🔄, (2) Learning from Human Demonstrations 👤, (3) Mass Identification ⚖️, and (4) Policy Learning 🧠. We begin by capturing videos of the scene and human demonstrations 📹. Robotic actions are then executed in both simulation and the real world to identify object mass via our differentiable physics engine 🔬. Lastly, a manipulation policy is trained using the demonstrations and identified mass 🎯.
+            </p>
+          </div>
+        </div>
+        <div class="column has-text-justified is-four-fifths is-hidden-tablet">
+          <h2 class="title is-1 has-text-centered is-size-4-mobile">Method Overview 🚀</h2>
+          <div class="content">
+            <p>
+              <strong>Overview of our method 🚀</strong> Our approach consists of four components: (1) Real-to-Sim 🔄, (2) Learning from Human Demonstrations 👤, (3) Mass Identification ⚖️, and (4) Policy Learning 🧠. We begin by capturing videos of the scene and human demonstrations 📹. Robotic actions are then executed in both simulation and the real world to identify object mass via our differentiable physics engine 🔬. Lastly, a manipulation policy is trained using the demonstrations and identified mass 🎯.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="columns is-centered">
+        <div class="column is-full">
+          <img src="./static/images/method.png" alt="D-REX Method Overview" style="width: 100%; height: auto;" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section is-large" id="workspace-splats">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-justified is-four-fifths">
+          <h2 class="title is-1 has-text-centered is-size-4-mobile">Interactive 3D Workspace 🌟</h2>
+          <div class="content">
+            <p>
+              Explore our interactive 3D workspace that demonstrates the real-to-sim results. This interactive viewer allows you to examine the Gaussian Splats representations and see how our method reconstructs object geometry from real-world observations.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="columns is-centered">
+        <div class="column is-full">
+          <div style="width: 100%; height: 600px; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+            <iframe src="./static/workspace_splats.html" style="width: 100%; height: 100%; border: none;"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section is-small has-background-black has-text-light" id="task-tracking">
+    <div class="container is-max-desktop">
+
+      <h2 class="title is-1 has-text-white has-text-centered is-size-4-mobile">Mass Identification via Object Pushing</h2>
+
+      <div class="content has-text-justified">
+        <p style="color: white;">
+          We conduct experiments on mass identification across diverse object geometries and identical geometries with varying densities. Our method accurately estimates mass in both settings, demonstrating robustness to shape and density variations.
+        </p>
+      </div>
+      
+      <div class="content has-text-justified">
+        <p style="color: white;">
+          <strong>Scroll horizontally to explore the full figure →</strong>
+        </p>
+      </div>
+      
+      <div style="width: 100%; overflow-x: auto;">
+        <img src="./static/images/mass_objects.png" alt="Mass Objects" style="width: auto; height: auto; min-width: 2000px;" />
+      </div>
+      
+      <div class="content has-text-justified">
+        <p style="color: white;">
+          <em>We conduct experiments on mass identification across diverse object geometries and identical geometries with varying densities. Our method accurately estimates mass in both settings, demonstrating robustness to shape and density variations.</em>
+        </p>
+      </div>
+      
+      <div class="columns is-centered">
+        <div class="column is-half">
+          <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+            <source src="./static/videos/mass_00.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="column is-half">
+          <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+            <source src="./static/videos/mass_01.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+      
+      <div class="content has-text-justified">
+        <p style="color: white;">
+          <em>We demonstrate object trajectory rendering using Gaussian Splats with optimized mass parameters. The simulation closely matches real-world dynamics, bridging the sim-to-real gap with high visual fidelity across multiple viewpoints.</em>
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+
+  <section class="section is-small" id="wbc">
+    <div class="container is-fluid">
+      <div class="columns is-centered">
+        <div class="column is-four-fifths is-centered">
+          <h2 class="title is-1 has-text-centered is-size-4-mobile">Effectiveness of Force-Based Control through Grasping ⚖️</h2>
+
+
+          <div class="content has-text-justified">
+            <p>
+              In our grasping experiments 🔬, we evaluate how incorporating force-based constraints conditioned on object mass influences sim-to-real performance 📊. This setup highlights the need for mass-aware force control and demonstrates the impact of accurate mass identification on policy success 🎯✨.
+            </p>
+          </div>
+
+          <div class="content has-text-justified">
+            <p style="color: white;">
+              <strong>Scroll horizontally to view all grasping experiments →</strong>
+            </p>
+          </div>
+
+          <div style="width: 100%; overflow-x: auto;">
+            <div style="display: flex; gap: 30px; min-width: max-content; padding: 10px 0;">
+              <div style="flex-shrink: 0; width: 600px;">
+                <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+                  <source src="./static/videos/experiments/object_grasping/cookie_grasping.mp4" type="video/mp4">
+                </video>
+                <p class="has-text-centered" style="margin-top: 10px; color: white;"><strong>Cookie Grasping</strong></p>
+              </div>
+              <div style="flex-shrink: 0; width: 600px;">
+                <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+                  <source src="./static/videos/experiments/object_grasping/cube_grasping.mp4" type="video/mp4">
+                </video>
+                <p class="has-text-centered" style="margin-top: 10px; color: white;"><strong>Cube Grasping</strong></p>
+              </div>
+              <div style="flex-shrink: 0; width: 600px;">
+                <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+                  <source src="./static/videos/experiments/object_grasping/lightbulb_grasping.mp4" type="video/mp4">
+                </video>
+                <p class="has-text-centered" style="margin-top: 10px; color: white;"><strong>Lightbulb Grasping</strong></p>
+              </div>
+              <div style="flex-shrink: 0; width: 600px;">
+                <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+                  <source src="./static/videos/experiments/object_grasping/nutella_grasping.mp4" type="video/mp4">
+                </video>
+                <p class="has-text-centered" style="margin-top: 10px; color: white;"><strong>Nutella Grasping</strong></p>
+              </div>
+              <div style="flex-shrink: 0; width: 600px;">
+                <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+                  <source src="./static/videos/experiments/object_grasping/spray_grasping.mp4" type="video/mp4">
+                </video>
+                <p class="has-text-centered" style="margin-top: 10px; color: white;"><strong>Spray Grasping</strong></p>
+              </div>
+              <div style="flex-shrink: 0; width: 600px;">
+                <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9;">
+                  <source src="./static/videos/experiments/object_grasping/T_grasping.mp4" type="video/mp4">
+                </video>
+                <p class="has-text-centered" style="margin-top: 10px; color: white;"><strong>T Grasping</strong></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="content has-text-justified" id="stable-tracking">
+            <p>
+              We evaluate our force-aware grasping policy across various objects with pre-grasp poses 🎯 and two post-grasp positions 📍, demonstrating that the policy achieves stable, secure grasps 🔒.
+            </p>
+          </div>
+
+          <img src="./static/images/success_rate_grasping.png" alt="Success Rate Grasping" style="width: 100%; height: auto;" />
+          
+          <div class="content has-text-justified">
+            <p>
+              Our method consistently outperforms baselines across eight objects with diverse geometries and mass properties, demonstrating the robustness of our approach. While baseline performance tends to degrade on heavier objects, our method maintains high success rates with lower variance across all cases. These results show the effectiveness of our force-aware optimization in enabling stable and reliable grasping across a wide range of object characteristics.
+            </p>
+          </div>
+          
+          <!-- <div class="content has-text-justified" id="precise-tracking">
+            <p>
+              We evaluate our grasping policy on three objects that share identical geometry and demonstrations but differ in mass. Each policy is trained with a specific object mass to assess the impact of mass-aware force control. As shown in the figure above, policies perform well only when training and evaluation masses matched: the medium-mass policy succeeds on the medium object but fails on the <span style="color: #8C1515;">lighter</span> and <span style="color: #4B2E83;">heavier</span> ones due to under- and over-applied force, respectively. Mass mismatches likewise lead to unstable grasps for the other two policies. The results confirm this trend, with the highest success rate (80%) on the training mass, while performance drops to 40% and 30% on mismatched cases. These results highlight the importance of accurate mass conditioning for robust, reliable grasping.
+            </p>
+          </div> -->
+
+
+          <!-- Mass Policy Videos -->
+          <div class="content">
+            <h3 class="title is-4 has-text-centered">Mass Policy Evaluation Results</h3>
+            
+            <!-- Row 1: Training on Red Object -->
+            <div class="content">
+              <h4 class="title is-5 has-text-centered">Training on <span style="color: #8C1515;">Light</span> Object, Evaluation on All Masses</h4>
+              <div class="columns is-mobile" style="overflow-x: auto; white-space: nowrap;">
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_red_eval_red.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Light, Eval Light</p>
+                </div>
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_red_eval_blue.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Light, Eval Medium</p>
+                </div>
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_red_eval_purple.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Light, Eval Heavy</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 2: Training on Purple Object -->
+            <div class="content">
+              <h4 class="title is-5 has-text-centered">Training on <span style="color: #4B2E83;">Heavy</span> Object, Evaluation on All Masses</h4>
+              <div class="columns is-mobile" style="overflow-x: auto; white-space: nowrap;">
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_purple_eval_red.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Heavy, Eval Light</p>
+                </div>
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_purple_eval_blue.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Heavy, Eval Medium</p>
+                </div>
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_purple_eval_purple.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Heavy, Eval Heavy</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row 3: Training on Blue Object -->
+            <div class="content">
+              <h4 class="title is-5 has-text-centered">Training on <span style="color: #0066CC;">Medium</span> Object, Evaluation on All Masses</h4>
+              <div class="columns is-mobile" style="overflow-x: auto; white-space: nowrap;">
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_blue_eval_red.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Medium, Eval Light</p>
+                </div>
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_blue_eval_blue.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Medium, Eval Medium</p>
+                </div>
+                <div class="column is-4">
+                  <video autoplay muted loop playsinline controls style="width: 100%; height: auto;">
+                    <source src="./static/videos/experiments/mass_policy/train_blue_eval_purple.mp4" type="video/mp4">
+                  </video>
+                  <p class="has-text-centered is-size-7">Train Medium, Eval Heavy</p>
+                </div>
+              </div>
+              <div class="content has-text-justified">
+                <h5 class="title is-5 has-text-centered">Effectiveness of Mass-Aware Policy</h5>
+                <p>
+                  Policies perform well only when training and evaluation masses matched: the medium-mass policy succeeds on the medium object but fails on the <span style="color: #8C1515;">lighter</span> and <span style="color: #4B2E83;">heavier</span> ones due to under- and over-applied force, respectively. Mass mismatches likewise lead to unstable grasps for the other two policies. The results confirm this trend, with the highest success rate (80%) on the training mass, while performance drops to 40% and 30% on mismatched cases. These results highlight the importance of accurate mass conditioning for robust, reliable grasping.
+                </p>
+              </div>
+            </div>
+
+            <section class="section is-large" id="dexterous-tasks">
+              <div class="container is-max-desktop">
+                <h2 class="title is-1 has-text-centered is-size-4-mobile">More Dexterous Tasks 🤖</h2>
+                <div class="content has-text-justified">
+                  <p>
+                    Our D-REX framework extends beyond simple grasping to more complex dexterous manipulation tasks. These demonstrations showcase the versatility of our mass-aware force control approach in handling various real-world scenarios.
+                  </p>
+                </div>
+                
+                <div style="width: 100%; overflow-x: auto;">
+                  <div style="display: flex; gap: 20px; min-width: max-content; padding: 10px 0;">
+                    <div style="flex-shrink: 0; width: 400px;">
+                      <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <source src="./static/videos/experiments/dex/usestapler.mp4" type="video/mp4">
+                      </video>
+                      <p class="has-text-centered" style="margin-top: 10px;"><strong>Stapler</strong></p>
+                    </div>
+                    <div style="flex-shrink: 0; width: 400px;">
+                      <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <source src="./static/videos/experiments/dex/usemouse.mp4" type="video/mp4">
+                      </video>
+                      <p class="has-text-centered" style="margin-top: 10px;"><strong>Mouse</strong></p>
+                    </div>
+                    <div style="flex-shrink: 0; width: 400px;">
+                      <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <source src="./static/videos/experiments/dex/open_refrige.mp4" type="video/mp4">
+                      </video>
+                      <p class="has-text-centered" style="margin-top: 10px;"><strong>Refrigerator</strong></p>
+                    </div>
+                    <div style="flex-shrink: 0; width: 400px;">
+                      <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <source src="./static/videos/experiments/dex/grasp_unseen_screwdriver.mp4" type="video/mp4">
+                      </video>
+                      <p class="has-text-centered" style="margin-top: 10px;"><strong>Unseen Screwdriver</strong></p>
+                    </div>
+                    <div style="flex-shrink: 0; width: 400px;">
+                      <video autoplay muted loop playsinline controls width="100%" style="aspect-ratio: 16 / 9; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <source src="./static/videos/experiments/dex/grasp_large_screwdriver.mp4" type="video/mp4">
+                      </video>
+                      <p class="has-text-centered" style="margin-top: 10px;"><strong>Large Screwdriver</strong></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="content has-text-justified">
+                  <p>
+                    These dexterous manipulation tasks demonstrate the versatility and robustness of our D-REX framework. By accurately identifying object mass and incorporating force-aware control, our method enables successful execution of complex manipulation tasks that require precise force application and coordination.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+
+            <!-- <div class="content has-text-centered">
+              <p class="is-size-7 has-text-grey">💡 Scroll horizontally to view all videos. Each row shows training on one mass and evaluation across all three masses.</p>
+            </div> -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              Website template modified from <a href="https://nerfies.github.io/">NeRFies</a> and <a
+                href="https://huy-ha.github.io/scalingup/">Scaling Up Distilling Down</a> and <a
+                href="https://real-stanford.github.io/umi-on-legs/">UMI on Legs</a>.
+            </p>
+            <p>
+              This website is licensed under a <a rel="license"
+                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+                Commons Attribution-ShareAlike 4.0 International License</a>.
+            </p>
+            <p>
+              This means you are free to borrow and modify the <a
+                href="https://github.com/nerfies/nerfies.github.io">source
+                code</a> of this website as long as
+              you link back to the <a href="https://nerfies.github.io/">NeRFies</a> page in the footer.
+              Please remember to remove the analytics code included in the header of the website which
+              you do not want on your website.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
+</html>
